@@ -18,7 +18,7 @@
 ## ЭТАП 1: ПОЛНЫЙ АРХИВ
 
 ### Исходные данные
-- **URL (web.archive)**: https://web.archive.org/web/20220329235119/https://adfoto.com.ua/
+- **URL (web.archive)**: https://web.archive.org/web/20220408023113/https://adfoto.com.ua/
 - **Что уже скачано**: https://github.com/DrAndromeda/AdFoto.com.ua (31 страница из ~115)
 - **Где лежит локально**: `~/Desktop/adfoto_mirror/`, `adfoto_archive/`, `adfoto_assets/`
 
@@ -34,7 +34,7 @@ wget --mirror \
      --domains=adfoto.com.ua,web.archive.org \
      --wait=2 \
      --random-wait \
-     "https://web.archive.org/web/20220329235119/https://adfoto.com.ua/"
+     "https://web.archive.org/web/20220408023113/https://adfoto.com.ua/"
 ```
 
 ### Что должно быть в архиве

@@ -1,0 +1,137 @@
+---
+import Base from '../../layouts/Base.astro';
+import Cta from '../../components/Cta.astro';
+import Picture from '../../components/Picture.astro';
+import { LANGS, SECTIONS, type Lang } from '../../lib/site';
+import { t, sectionMeta } from '../../i18n/ui';
+import { avifSrcset, portfolioCases, bySection, bestImage, href, fullUrl, pictureHtml, mediaInfo, type Page } from '../../lib/content';
+import { home } from '../../data/home';
+import { homeX } from '../../data/home-extra';
+import { icon } from '../../lib/icons';
+export const getStaticPaths = () => LANGS.map((lang) => ({ params: { lang } }));
+
+const lang = Astro.params.lang as Lang;
+const h = home[lang];
+const x = homeX[lang];
+const sec = sectionMeta[lang];
+const subLabel: Record<string, string> = { food: t(lang, 'filter.food'), subject: t(lang, 'filter.subject'), fashion: t(lang, 'filter.fashion'), interior: t(lang, 'filter.interior'), jewelry: t(lang, 'filter.jewelry') };
+
+// Curated picks: photographic (non white-background) images, one per case, biggest first.
+const cases = portfolioCases('ru');
+const withPhoto = cases.map((c) => ({ c, src: bestImage(c, { photo: true, minW: 700 }) })).filter((x): x is { c: Page; src: string } => !!x.src);
+const heroPool = [...withPhoto].sort((a, b) => mediaInfo(b.src)!.w - mediaInfo(a.src)!.w);
+// Hero: landscape, darker, non-white photos read best under white type.
+const heroOk = (src: string) => { const m = mediaInfo(src) as any; return m && m.w / m.h >= 1.25 && m.lum < 150 && !m.white; };
+const heroCands = cases.flatMap((c) => c.images.filter(heroOk).map((src) => ({ c, src }))).sort((a, b) => mediaInfo(b.src)!.w - mediaInfo(a.src)!.w);
+const heroSlides: { c: Page; src: string }[] = [];
+for (const h of heroCands) { if (heroSlides.length < 4 && !heroSlides.some((x) => x.c.slug === h.c.slug)) heroSlides.push(h); }
+const used = new Set(heroSlides.map((p) => p.c.slug));
+// Bento: varied categories, skip hero cases
+const bento: typeof withPhoto = [];
+for (const sub of ['food', 'fashion', 'subject', 'food', 'interior', 'fashion', 'jewelry', 'food', 'subject']) {
+  const pick = withPhoto.find((p) => p.c.sub === sub && !used.has(p.c.slug) && !bento.includes(p));
+  if (pick) bento.push(pick);
+  if (bento.length === 6) break;
+}
+for (const p of withPhoto) { if (bento.length >= 6) break; if (!bento.includes(p) && !used.has(p.c.slug)) bento.push(p); }
+const services = SECTIONS.map((s, i) => ({ s, i }));
+const pad = (i: number) => String(i + 1).padStart(2, '0');
+---
+<Base preload={heroSlides[0] ? { srcset: avifSrcset(heroSlides[0].src), sizes: '100vw' } : undefined} lang={lang} title={h.title} description={h.description} image={heroSlides[0]?.src} overHero alternates={{ ru: '/', uk: '/', en: '/' }}>
+  <section class="hero">
+    <div class="hero-media" aria-hidden="true">
+      {heroSlides.map((p, i) => (
+        <div class="slide"><Fragment set:html={pictureHtml(p.src, '', { sizes: '100vw', eager: i === 0 })} /></div>
+      ))}
+    </div>
+    <div class="container hero-inner">
+      <p class="eyebrow">{x.kicker}</p>
+      <h1 set:html={x.h1} />
+      <div class="hero-bottom">
+        <p>{h.lead}</p>
+        <div class="btn-row">
+          <a class="btn" href={href(lang, '/portfolio/')}>{t(lang, 'home.all')}<Fragment set:html={icon.arrow} /></a>
+          <a class="btn ghost on-dark" href="#contact">{t(lang, 'cta.order')}</a>
+        </div>
+      </div>
+      <div class="hero-stats">
+        {x.stats.map(([v, l]) => <div><strong>{v}</strong><span>{l}</span></div>)}
+      </div>
+    </div>
+  </section>
+
+  <div class="marquee" aria-label={t(lang, 'clients')}>
+    <span class="marquee-label">{t(lang, 'clients')}</span>
+    <div class="marquee-track" aria-hidden="true">
+      {[...x.clients, ...x.clients].map((c) => <span>{c}</span>)}
+    </div>
+    <span class="visually-hidden">{x.clients.join(', ')}</span>
+  </div>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <div data-reveal><p class="eyebrow">{t(lang, 'work.eyebrow')}</p><h2 set:html={t(lang, 'work.title')} /></div>
+        <div class="side" data-reveal style="--d:.1s">
+          <p class="lead">{t(lang, 'work.lead')}</p>
+          <a class="btn ghost" href={href(lang, '/portfolio/')}>{t(lang, 'home.all')}<Fragment set:html={icon.arrow} /></a>
+        </div>
+      </div>
+      <div class="bento">
+        {bento.map(({ c, src }, i) => (
+          <a class="work" href={href('ru', c.url)} hreflang="ru" data-reveal style={`--d:${(i % 3) * 0.08}s`}>
+            <Picture src={src} alt={c.h1} sizes={i === 0 ? '(min-width:900px) 58vw, 100vw' : '(min-width:900px) 40vw, 50vw'} />
+            <span class="arrow" set:html={icon.arrowUpRight} />
+            <span class="work-cap"><span class="chip">{subLabel[c.sub] ?? sec.foto.name}</span><h3>{c.h1}</h3></span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section soft" id="services">
+    <div class="container">
+      <div class="section-head">
+        <div data-reveal><p class="eyebrow">{t(lang, 'svc.eyebrow')}</p><h2 set:html={t(lang, 'svc.title')} /></div>
+        <div class="side" data-reveal style="--d:.1s"><p class="lead">{t(lang, 'svc.lead')}</p></div>
+      </div>
+      <div class="svc-list">
+        {services.map(({ s, i }) => (
+          <a class="svc-row" href={href(lang, `/${s}/`)} data-reveal>
+            <span class="n">{pad(i)}</span>
+            <h3>{sec[s].name}</h3>
+            <p>{sec[s].short}</p>
+            <span class="go" set:html={icon.arrow} />
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <div data-reveal><p class="eyebrow">{t(lang, 'process.eyebrow')}</p><h2 set:html={t(lang, 'process.title')} /></div>
+      </div>
+      <ol class="steps" style="list-style:none;margin:0;padding:0">
+        {x.process.map(([title, text], i) => (
+          <li class="step" data-reveal style={`--d:${i * 0.08}s`}><span class="num">{pad(i)}</span><h3>{title}</h3><p>{text}</p></li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section soft">
+    <div class="container editorial">
+      <div data-reveal><p class="eyebrow">{t(lang, 'about.eyebrow')}</p><h2 set:html={x.about} /></div>
+      <div class="cols">
+        {h.sections.map((s, i) => (
+          <div data-reveal style={`--d:${(i % 2) * 0.08}s`}><h3>{s.h}</h3>{s.p.map((p) => <p>{p}</p>)}</div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Cta lang={lang} />
+</Base>
+

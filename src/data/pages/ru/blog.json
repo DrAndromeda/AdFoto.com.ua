@@ -1,0 +1,20 @@
+{
+ "slug": "blog",
+ "oldPath": "/blog.html",
+ "section": "meta",
+ "sub": "blog",
+ "url": "/blog/",
+ "lang": "ru",
+ "title": "Популярны блог о рекламе и фотосъемке агентства AdFoto",
+ "h1": "Блог",
+ "description": "Блог агентства AdFoto о популярных новинках в сфере медиа, продвижения и рекламы.",
+ "cover": "/media/trendy-graficheskogo-dizajna-309x220-b79.jpg",
+ "price": null,
+ "images": [
+  "/media/trendy-graficheskogo-dizajna-309x220-b79.jpg",
+  "/media/mediabannery1-309x220-752.jpg",
+  "/media/instagram-busines-309x220-69d.jpg",
+  "/media/foto-interera-309x220-dea.png"
+ ],
+ "body": "<div>\n\t<div class=\"isotope-item web-design\">\n\t\t<div class=\"image-box\">\n\t\t\t<div class=\"overlay-container\">\n\t\t\t\t<img src=\"/media/trendy-graficheskogo-dizajna-309x220-b79.jpg\" alt=\"Тренды web дизайна\" loading=\"lazy\" decoding=\"async\">\n\t\t\t</div>\n\t\t\t<div class=\"image-box-body\">\n\t\t\t\t<h3 class=\"title\"><a href=\"/blog/trendy-dizajna-dlja-web-sajta/\">Тренды web дизайна</a></h3>\n\t\t\t\t<p>Взрывные идеи в обработке фотографий для сайтов.</p>\n\t\t\t\t<a href=\"/blog/trendy-dizajna-dlja-web-sajta/\"><span>Подробнее</span></a>\n\t\t\t</div>\n\t\t</div>\n\t</div>\n\t<div class=\"isotope-item web-design\">\n\t\t<div class=\"image-box\">\n\t\t\t<div class=\"overlay-container\">\n\t\t\t\t<img src=\"/media/mediabannery1-309x220-752.jpg\" alt=\"Видеомаркетинг в сети\" loading=\"lazy\" decoding=\"async\">\n\t\t\t</div>\n\t\t\t<div class=\"image-box-body\">\n\t\t\t\t<h3 class=\"title\"><a href=\"/blog/zachem-nyzen-videomarteking/\">Видеомаркетинг в сети</a></h3>\n\t\t\t\t<p>ТОП контент для сайта, без которого Вы не выйдете в ТОП.</p>\n\t\t\t\t<a href=\"/blog/zachem-nyzen-videomarteking/\"><span>Подробнее</span></a>\n\t\t\t</div>\n\t\t</div>\n\t</div>\n\t<div class=\"isotope-item web-design\">\n\t\t<div class=\"image-box\">\n\t\t\t<div class=\"overlay-container\">\n\t\t\t\t<img src=\"/media/instagram-busines-309x220-69d.jpg\" alt=\"Instagram для бизнеса\" loading=\"lazy\" decoding=\"async\">\n\t\t\t</div>\n\t\t\t<div class=\"image-box-body\">\n\t\t\t\t<h3 class=\"title\"><a href=\"/blog/5-preimyshestv-biznes-instagram/\">Instagram для бизнеса</a></h3>\n\t\t\t\t<p>5 преимуществ сервиса Instagram для бизнеса, и правила перехода.</p>\n\t\t\t\t<a href=\"/blog/5-preimyshestv-biznes-instagram/\"><span>Подробнее</span></a>\n\t\t\t</div>\n\t\t</div>\n\t</div>\n\t<div class=\"isotope-item web-design\">\n\t\t<div class=\"image-box\">\n\t\t\t<div class=\"overlay-container\">\n\t\t\t\t<img src=\"/media/foto-interera-309x220-dea.png\" alt=\"Успешная фотосъемка\" loading=\"lazy\" decoding=\"async\">\n\t\t\t</div>\n\t\t\t<div class=\"image-box-body\">\n\t\t\t\t<h3 class=\"title\"><a href=\"/blog/uspeshnye-foto-tovarov-i-fotosemka-intererov/\">Успешная фотосъемка</a></h3>\n\t\t\t\t<p>Фото товара и интерьера - это залог продажи по выгодной цене, заинтересованным покупателям.</p>\n\t\t\t\t<a href=\"/blog/uspeshnye-foto-tovarov-i-fotosemka-intererov/\"><span>Подробнее</span></a>\n\t\t\t</div>\n\t\t</div>\n\t</div>\n\t</div>\n<div>Страницы:   </div>"
+}

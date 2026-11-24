@@ -1,0 +1,33 @@
+---
+import { SITE, type Lang } from '../lib/site';
+import { t } from '../i18n/ui';
+import { icon } from '../lib/icons';
+const { lang } = Astro.props as { lang: Lang };
+const cards = [
+  { href: SITE.social.telegram, ic: icon.telegram, s: t(lang, 'contact.tg.s'), v: '@adfoto', ext: true },
+  { href: SITE.whatsapp, ic: icon.whatsapp, s: t(lang, 'contact.wa.s'), v: 'WhatsApp', ext: true },
+  { href: `tel:${SITE.phones[0]}`, ic: icon.phone, s: t(lang, 'contact.phone'), v: SITE.phonesDisplay[0] },
+  { href: `mailto:${SITE.email}`, ic: icon.mail, s: t(lang, 'contact.mail'), v: SITE.email },
+];
+---
+<section class="cta-band" id="contact">
+  <div class="container">
+    <div class="cta-grid">
+      <h2 data-reveal set:html={t(lang, 'cta.big')} />
+      <div data-reveal style="--d:.1s">
+        <p class="lead">{t(lang, 'cta.text')}</p>
+        <div class="btn-row" style="margin-top:1.5rem">
+          <a class="btn" href={SITE.social.telegram} rel="noopener">{t(lang, 'cta.brief')}<Fragment set:html={icon.arrow} /></a>
+        </div>
+      </div>
+    </div>
+    <div class="contact-cards">
+      {cards.map((c, i) => (
+        <a class="contact-card" href={c.href} rel={c.ext ? 'noopener' : undefined} data-reveal style={`--d:${i * 0.06}s`}>
+          <span class="ic" set:html={c.ic} />
+          <span><small>{c.s}</small><strong>{c.v}</strong></span>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,212 @@
+---
+import Base from '../../layouts/Base.astro';
+import Cta from '../../components/Cta.astro';
+import Picture from '../../components/Picture.astro';
+import { LANGS, SECTIONS, SITE, type Lang, type Section } from '../../lib/site';
+import { t, sectionMeta } from '../../i18n/ui';
+import { hubCopy, faq, about, contacts } from '../../data/static';
+import { avifSrcset, mediaInfo, pagesFor, getPage, bySection, bestImage, isWhite, href, fullUrl, renderBody, stripTags, type Page } from '../../lib/content';
+import { icon } from '../../lib/icons';
+
+export function getStaticPaths() {
+  const META_SUBS = ['home', 'portfolio', 'about', 'contacts', 'faq', 'blog'];
+  const out: any[] = [];
+  for (const lang of LANGS) {
+    for (const s of [...SECTIONS, 'blog']) out.push({ params: { lang, path: s }, props: { kind: 'hub', section: s } });
+    for (const k of ['about', 'contacts', 'faq']) out.push({ params: { lang, path: k }, props: { kind: k } });
+    for (const p of pagesFor(lang)) {
+      if (META_SUBS.includes(p.sub)) continue;
+      out.push({ params: { lang, path: p.url.replace(/^\/|\/$/g, '') }, props: { kind: 'page', slug: p.slug } });
+    }
+  }
+  return out;
+}
+const lang = Astro.params.lang as Lang;
+const { kind, section, slug } = Astro.props as { kind: string; section?: string; slug?: string };
+const origin = Astro.site!.origin;
+const baseP = import.meta.env.BASE_URL.replace(/\/$/, '');
+const sec = sectionMeta[lang];
+const secName = (s: string) => (s === 'blog' ? t(lang, 'nav.blog') : s === 'info' || s === 'meta' ? '' : sec[s as Section]?.name ?? s);
+const subLabel: Record<string, string> = { food: t(lang, 'filter.food'), subject: t(lang, 'filter.subject'), fashion: t(lang, 'filter.fashion'), interior: t(lang, 'filter.interior'), jewelry: t(lang, 'filter.jewelry') };
+
+let title = '', description = '', h1 = '', lead = '', image: string | undefined, body = '', type: 'website' | 'article' = 'website';
+let alternates: Partial<Record<Lang, string>> = { ru: '/', uk: '/', en: '/' };
+let cards: Page[] = [], related: Page[] = [], crumbs: { name: string; url: string }[] = [];
+let ld: object[] = [];
+let page: Page | undefined;
+let cover: string | undefined;
+let eyebrow = '';
+
+if (kind === 'hub') {
+  const c = hubCopy[lang][section as Section | 'blog'];
+  title = c.title; description = c.description; h1 = secName(section!); lead = c.answer;
+  eyebrow = section === 'blog' ? t(lang, 'nav.blog') : `${t(lang, 'nav.services')} · ${String(SECTIONS.indexOf(section as Section) + 1).padStart(2, '0')}`;
+  alternates = Object.fromEntries(LANGS.map((l) => [l, `/${section}/`]));
+  const own = section === 'blog' ? pagesFor(lang).filter((p) => p.section === 'blog') : bySection(lang, section as Section);
+  cards = own.length ? own : section === 'blog' ? pagesFor('ru').filter((p) => p.section === 'blog') : bySection('ru', section as Section);
+  // Photographic covers first so the grid opens strong.
+  cards = [...cards].sort((a, b) => Number(!!bestImage(b, { photo: true })) - Number(!!bestImage(a, { photo: true })));
+  crumbs = [{ name: secName(section!), url: `/${section}/` }];
+} else if (kind === 'faq') {
+  title = { ru: 'FAQ — вопросы о съёмке и рекламе | AdFoto', uk: 'FAQ — запитання про зйомку та рекламу | AdFoto', en: 'FAQ — shoots and advertising | AdFoto' }[lang];
+  description = faq[lang][0].a.slice(0, 150); h1 = t(lang, 'faq.title'); eyebrow = t(lang, 'faq.eyebrow');
+  alternates = Object.fromEntries(LANGS.map((l) => [l, '/faq/']));
+  ld = [{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq[lang].map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }];
+  crumbs = [{ name: 'FAQ', url: '/faq/' }];
+} else if (kind === 'about') {
+  const a = about[lang]; title = a.title; description = a.description; h1 = a.h1; eyebrow = t(lang, 'about.eyebrow');
+  alternates = Object.fromEntries(LANGS.map((l) => [l, '/about/']));
+  crumbs = [{ name: a.h1, url: '/about/' }];
+} else if (kind === 'contacts') {
+  const c = contacts[lang]; title = c.title; description = c.description; h1 = c.h1; eyebrow = 'AdFoto';
+  alternates = Object.fromEntries(LANGS.map((l) => [l, '/contacts/']));
+  crumbs = [{ name: c.h1, url: '/contacts/' }];
+} else {
+  page = getPage(lang, slug!)!;
+  title = page.title; description = page.description || stripTags(page.body).slice(0, 155); h1 = page.h1;
+  body = renderBody(lang, page.body);
+  cover = bestImage(page, { photo: true, minW: 900 });
+  image = cover ?? page.cover ?? undefined;
+  type = page.section === 'blog' ? 'article' : 'website';
+  eyebrow = page.section === 'foto' && subLabel[page.sub] ? `${sec.foto.name} · ${subLabel[page.sub]}` : secName(page.section);
+  alternates = Object.fromEntries(LANGS.filter((l) => getPage(l, slug!)).map((l) => [l, page!.url]));
+  related = bySection(lang, page.section as Section).filter((p) => p.slug !== slug && p.cover && mediaInfo(p.cover)).sort((a, b) => Number(b.sub === page!.sub) - Number(a.sub === page!.sub)).slice(0, 3);
+  const sName = secName(page.section);
+  crumbs = [...(sName ? [{ name: sName, url: `/${page.section}/` }] : []), { name: h1, url: page.url }];
+  if (type === 'article') ld = [{ '@context': 'https://schema.org', '@type': 'BlogPosting', headline: h1, description, inLanguage: lang, image: image ? origin + fullUrl(image) : undefined, author: { '@type': 'Organization', name: SITE.name }, mainEntityOfPage: `${origin}${baseP}/${lang}${page.url}` }];
+}
+ld = [...ld, { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'AdFoto', item: `${origin}${baseP}/${lang}/` },
+  ...crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 2, name: c.name, item: `${origin}${baseP}/${lang}${c.url}` }))] }];
+const untranslated = kind === 'hub' && lang !== 'ru' && cards.length > 0 && cards[0].lang !== lang;
+const cardImg = (p: Page) => bestImage(p, { photo: true }) ?? bestImage(p);
+const longTitle = h1.length > 34;
+---
+<Base preload={kind === 'page' && cover ? { srcset: avifSrcset(cover), sizes: '(min-width:1440px) 1330px, 100vw' } : undefined} lang={lang} title={title} description={description} image={image} jsonLd={ld} alternates={alternates} type={type} actionBar={kind === 'page' || kind === 'hub'}>
+  <section class="container page-hero" class:list={{ long: longTitle }}>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={href(lang, '/')}>AdFoto</a>
+      {crumbs.map((c, i) => <><Fragment set:html={icon.chevronRight} />{i < crumbs.length - 1 ? <a href={href(lang, c.url)}>{c.name}</a> : <span aria-current="page">{c.name}</span>}</>)}
+    </nav>
+    <div class="page-hero-grid">
+      <div>
+        {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+        <h1>{h1}</h1>
+      </div>
+      {(lead || (kind === 'page' && description)) && <p class="lead">{lead || description}</p>}
+    </div>
+  </section>
+
+  {kind === 'page' && cover && (
+    <div class="container"><div class="cover"><Picture src={cover} alt={h1} sizes="(min-width:1440px) 1330px, 100vw" eager /></div></div>
+  )}
+
+  <section class="container" style="padding-bottom:var(--space-section)">
+    {untranslated && <p class="notice"><Fragment set:html={icon.info} />{t(lang, 'untranslated')}</p>}
+
+    {kind === 'hub' && <h2 class="visually-hidden">{h1}</h2>}
+    {kind === 'hub' && (
+      <div class="card-grid">
+        {cards.map((p, i) => {
+          const img = cardImg(p);
+          return (
+            <a class:list={['card', { 'no-media': !img }]} href={`${baseP}/${p.lang}${p.url}`} hreflang={p.lang} data-reveal style={`--d:${(i % 3) * 0.07}s`}>
+              {img && (
+                <span class:list={['media', { white: isWhite(img) }]}>
+                  <Picture src={img} alt={p.h1} sizes="(min-width:1100px) 440px, (min-width:600px) 50vw, 100vw" />
+                  <span class="arrow" set:html={icon.arrowUpRight} />
+                </span>
+              )}
+              <span class="meta">{subLabel[p.sub] && <span class="chip">{subLabel[p.sub]}</span>}{p.price && <span class="chip accent">{p.price}</span>}</span>
+              <h3>{p.h1}</h3>
+            </a>
+          );
+        })}
+      </div>
+    )}
+
+    {kind === 'page' && (
+      <div class="article-grid">
+        <article class="prose" id="article" set:html={body} />
+        <aside class="aside-card" aria-label={t(lang, 'cta.order')}>
+          <div class="price"><small>{t(lang, 'aside.price')}</small>{page?.price ? page.price.replace(/\s*\/\s*фото$/, '') : t(lang, 'aside.priceNone')}{page?.price && /фото$/.test(page.price) && <span>{{ ru: 'за фото', uk: 'за фото', en: 'per photo' }[lang]}</span>}</div>
+          <ul>
+            <li><Fragment set:html={icon.check} />{t(lang, 'aside.p1')}</li>
+            <li><Fragment set:html={icon.check} />{t(lang, 'aside.p2')}</li>
+            <li><Fragment set:html={icon.check} />{t(lang, 'aside.p3')}</li>
+          </ul>
+          <a class="btn" href={SITE.social.telegram} rel="noopener"><Fragment set:html={icon.telegram} />{t(lang, 'cta.order')}</a>
+          <a class="btn ghost" href={`tel:${SITE.phones[0]}`}><Fragment set:html={icon.phone} />{SITE.phonesDisplay[0]}</a>
+          <a class="muted" href={href(lang, '/faq/')} style="font-size:.9rem;display:inline-flex;gap:.4rem;align-items:center;min-height:44px">{t(lang, 'faq.title')} →</a>
+        </aside>
+      </div>
+    )}
+
+    {kind === 'about' && (
+      <div class="editorial">
+        <h2 data-reveal style="font-size:var(--step-3)">{about[lang].p[0]}</h2>
+        <div class="cols">{about[lang].p.slice(1).map((p, i) => <p data-reveal style={`--d:${i * 0.08}s;font-size:var(--step-1)`}>{p}</p>)}</div>
+      </div>
+    )}
+
+    {kind === 'contacts' && (
+      <div class="editorial">
+        <div class="contact-cards" style="grid-template-columns:1fr;margin:0">
+          <a class="contact-card" href={SITE.social.telegram} rel="noopener"><span class="ic" set:html={icon.telegram} /><span><small>{t(lang, 'contact.tg.s')}</small><strong>Telegram @adfoto</strong></span></a>
+          <a class="contact-card" href={SITE.whatsapp} rel="noopener"><span class="ic" set:html={icon.whatsapp} /><span><small>{t(lang, 'contact.wa.s')}</small><strong>WhatsApp</strong></span></a>
+          {SITE.phones.map((p, i) => <a class="contact-card" href={`tel:${p}`}><span class="ic" set:html={icon.phone} /><span><small>{t(lang, 'contact.phone')}</small><strong>{SITE.phonesDisplay[i]}</strong></span></a>)}
+          <a class="contact-card" href={`mailto:${SITE.email}`}><span class="ic" set:html={icon.mail} /><span><small>{t(lang, 'contact.mail')}</small><strong>{SITE.email}</strong></span></a>
+        </div>
+        <div class="cols" style="grid-template-columns:1fr">
+          <div class="contact-card" style="align-items:start"><span class="ic" set:html={icon.pin} /><span><small>{contacts[lang].find}</small><strong>{SITE.address.street}, {SITE.address.city}</strong><small style="margin-top:.5rem">{contacts[lang].studio}</small></span></div>
+          <div class="contact-card" style="align-items:start"><span class="ic" set:html={icon.clock} /><span><small>{{ ru: 'График', uk: 'Графік', en: 'Hours' }[lang]}</small><strong>{contacts[lang].hours}</strong></span></div>
+          <div class="socials">
+            <a href={SITE.social.instagram} rel="noopener" aria-label="Instagram"><Fragment set:html={icon.instagram} /></a>
+            <a href={SITE.social.facebook} rel="noopener" aria-label="Facebook"><Fragment set:html={icon.facebook} /></a>
+            <a href={SITE.social.youtube} rel="noopener" aria-label="YouTube"><Fragment set:html={icon.youtube} /></a>
+            <a href={SITE.social.linkedin} rel="noopener" aria-label="LinkedIn"><Fragment set:html={icon.linkedin} /></a>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {kind === 'faq' && (
+      <div class="faq">{faq[lang].map((f, i) => <details open={i === 0}><summary>{f.q}<span class="pm" aria-hidden="true" /></summary><p>{f.a}</p></details>)}</div>
+    )}
+  </section>
+
+  {related.length > 0 && (
+    <section class="section soft">
+      <div class="container">
+        <div class="section-head"><h2 data-reveal>{t(lang, 'related')}</h2></div>
+        <div class="card-grid">{related.map((p, i) => {
+          const img = cardImg(p)!;
+          return (
+            <a class="card" href={href(lang, p.url)} data-reveal style={`--d:${i * 0.07}s`}>
+              <span class:list={['media', { white: isWhite(img) }]}><Picture src={img} alt={p.h1} sizes="(min-width:1100px) 440px, (min-width:600px) 50vw, 100vw" /><span class="arrow" set:html={icon.arrowUpRight} /></span>
+              <span class="meta">{p.price && <span class="chip accent">{p.price}</span>}</span>
+              <h3>{p.h1}</h3>
+            </a>
+          );
+        })}</div>
+      </div>
+    </section>
+  )}
+  <Cta lang={lang} />
+</Base>
+{kind === 'page' && (
+  <script>
+    import GLightbox from 'glightbox';
+    import 'glightbox/dist/css/glightbox.min.css';
+    document.querySelectorAll<HTMLImageElement>('#article picture img, #article > img').forEach((img) => {
+      if (img.closest('a')) return;
+      const pic = img.closest('picture') ?? img;
+      const src = (img.currentSrc || img.src).replace(/-(\d+)\.(webp|avif)$/, (m) => m); // lightbox uses largest variant below
+      const srcset = pic.querySelector?.('source[type="image/webp"]')?.getAttribute('srcset');
+      const largest = srcset ? srcset.split(',').pop()!.trim().split(' ')[0] : src;
+      const a = document.createElement('a');
+      a.href = largest; a.className = 'glightbox'; a.dataset.gallery = 'case';
+      pic.replaceWith(a); a.appendChild(pic);
+    });
+    GLightbox({ selector: '#article .glightbox', touchNavigation: true, loop: true, zoomable: true });
+  </script>
+)}

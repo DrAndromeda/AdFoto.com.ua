@@ -1,0 +1,15 @@
+{
+ "slug": "video",
+ "oldPath": "/video.html",
+ "section": "reklama",
+ "sub": "video",
+ "url": "/reklama/video/",
+ "lang": "ru",
+ "title": "Ролики о рекламе и фотосъемках",
+ "h1": "Видео ролики о рекламе и предметной фотосъемке AdFoto",
+ "description": "Короткие видео о рекламных съемках и прочих особенностях работы медиа.",
+ "cover": null,
+ "price": null,
+ "images": [],
+ "body": "<div itemprop=\"name\"></div>\n<iframe src=\"https://www.youtube.com/embed/3sYM-e0KyTg\" frameborder=\"0\"></iframe>\n<iframe src=\"https://www.youtube.com/embed/bKW8cGmOsMo\" frameborder=\"0\"></iframe>\n<p><iframe src=\"https://www.youtube.com/embed/U9Xn6uhi-Us\" frameborder=\"0\"></iframe></p>\n<p>Предлагаем создание качественного аудиовизуального контента интересного содержания для Ваших каналов и интернет ресурсов. Операторская съемка, профессиональная аппаратура и талантливые постановщики воплотят в жизнь даже самые смелые фантазии. <br>Виды предоставляемых видео услуг - <span><a href=\"/reklama/videosemka/\"><span>adfoto.com.ua/videosemka</span></a>.</span>Обращайтесь и мы создадим для Вас неповторимую видеосъемку!<span><span><br></span></span></p>"
+}

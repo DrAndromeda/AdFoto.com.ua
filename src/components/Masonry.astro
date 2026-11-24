@@ -1,0 +1,47 @@
+---
+import type { Page } from '../lib/content';
+import { href, fullUrl, mediaInfo, isWhite, pictureHtml } from '../lib/content';
+import type { Lang } from '../lib/site';
+import { t } from '../i18n/ui';
+interface Props { lang: Lang; cases: Page[]; filters?: boolean; perCase?: number }
+const { lang, cases, filters = true, perCase = 8 } = Astro.props;
+const tiles = cases.flatMap((c) => c.images.filter((i) => mediaInfo(i)).sort((a, b) => Number(isWhite(a)) - Number(isWhite(b))).slice(0, perCase).map((src) => ({ src, c })));
+const subs = ['food', 'subject', 'fashion', 'interior', 'jewelry'].filter((s) => tiles.some((x) => x.c.sub === s));
+const count = (s: string) => tiles.filter((x) => s === 'all' || x.c.sub === s).length;
+---
+{filters && (
+  <div class="filters" role="toolbar" aria-label="Filter" id="filters">
+    <button type="button" data-f="all" aria-pressed="true">{t(lang, 'filter.all')}<sup>{count('all')}</sup></button>
+    {subs.map((s) => <button type="button" data-f={s} aria-pressed="false">{t(lang, `filter.${s}`)}<sup>{count(s)}</sup></button>)}
+  </div>
+)}
+<div class="masonry" id="grid">
+  {tiles.map(({ src, c }, i) => (
+    <figure class:list={['tile', { white: isWhite(src) }]} data-sub={c.sub}>
+      <a href={fullUrl(src)} class="glightbox" data-gallery="portfolio" data-description={c.h1} aria-label={c.h1}>
+        <Fragment set:html={pictureHtml(src, c.h1, { sizes: '(min-width:1500px) 25vw, (min-width:900px) 33vw, 50vw', eager: i === 0, noLazy: i < 6 })} />
+      </a>
+      <figcaption><a href={href(c.lang, c.url)} hreflang={c.lang}>{c.h1} →</a></figcaption>
+    </figure>
+  ))}
+</div>
+<script>
+  import GLightbox from 'glightbox';
+  import 'glightbox/dist/css/glightbox.min.css';
+  const opts = { selector: '.tile:not([hidden]) .glightbox', touchNavigation: true, loop: true, zoomable: true };
+  let box = GLightbox(opts);
+  document.querySelectorAll<HTMLButtonElement>('#filters button').forEach((b) =>
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#filters button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      const f = b.dataset.f;
+      document.querySelectorAll<HTMLElement>('#grid .tile').forEach((el) => {
+        const show = f === 'all' || el.dataset.sub === f;
+        el.hidden = !show;
+        el.classList.remove('enter');
+        if (show) { void el.offsetWidth; el.classList.add('enter'); }
+      });
+      box.destroy();
+      box = GLightbox(opts);
+    }),
+  );
+</script>

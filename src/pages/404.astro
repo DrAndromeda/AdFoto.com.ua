@@ -1,0 +1,29 @@
+---
+// Real 404 page (dist/404.html): used by Apache via ErrorDocument and picked up automatically by GitHub Pages.
+// All links are absolute (base-prefixed), so it renders correctly at any missing URL depth.
+import Base from '../layouts/Base.astro';
+import Cta from '../components/Cta.astro';
+import { href } from '../lib/content';
+import { icon } from '../lib/icons';
+---
+<Base lang="ru" title="Страница не найдена | AdFoto" description="Такой страницы нет на сайте AdFoto." noindex>
+  <section class="container page-hero">
+    <div class="page-hero-grid">
+      <div>
+        <p class="eyebrow">404</p>
+        <h1>Страница не найдена</h1>
+      </div>
+      <p class="lead">
+        Возможно, страница переехала после обновления сайта. Начните с главной или посмотрите портфолио.<br />
+        <span lang="uk">Сторінку не знайдено.</span> · <span lang="en">Page not found.</span>
+      </p>
+    </div>
+    <div class="btn-row" style="margin-top:2rem">
+      <a class="btn" href={href('ru', '/')}>На главную<Fragment set:html={icon.arrow} /></a>
+      <a class="btn ghost" href={href('ru', '/portfolio/')}>Портфолио</a>
+      <a class="btn ghost" href={href('uk', '/')} hreflang="uk" lang="uk">Українською</a>
+      <a class="btn ghost" href={href('en', '/')} hreflang="en" lang="en">English</a>
+    </div>
+  </section>
+  <Cta lang="ru" />
+</Base>

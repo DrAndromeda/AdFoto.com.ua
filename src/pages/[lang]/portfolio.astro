@@ -1,0 +1,31 @@
+---
+import Base from '../../layouts/Base.astro';
+import Cta from '../../components/Cta.astro';
+import Masonry from '../../components/Masonry.astro';
+import { LANGS, type Lang } from '../../lib/site';
+import { t } from '../../i18n/ui';
+import { portfolioCases, fullUrl, mediaInfo, href, bestImage } from '../../lib/content';
+import { icon } from '../../lib/icons';
+export const getStaticPaths = () => LANGS.map((lang) => ({ params: { lang } }));
+const lang = Astro.params.lang as Lang;
+// Galleries are language-independent; captions use RU titles until translated. Photographic cases first.
+const cases = [...portfolioCases('ru')].sort((a, b) => Number(!!bestImage(b, { photo: true, minW: 700 })) - Number(!!bestImage(a, { photo: true, minW: 700 })));
+const copy = {
+  ru: ['Портфолио AdFoto — предметная, food и fashion-съёмка', 'Съёмка еды, одежды, украшений, интерьеров и товаров для каталогов, меню и интернет-магазинов. Нажмите на фото, чтобы открыть его в полном размере.', 'Портфолио'],
+  uk: ['Портфоліо AdFoto — предметна, food і fashion-зйомка', 'Зйомка їжі, одягу, прикрас, інтер’єрів і товарів для каталогів, меню та інтернет-магазинів. Натисніть на фото, щоб відкрити його в повному розмірі.', 'Портфоліо'],
+  en: ['AdFoto portfolio — product, food and fashion photography', 'Food, apparel, jewelry, interiors and product photography for catalogs, menus and online stores. Tap any photo to open it full size.', 'Portfolio'],
+}[lang];
+const ld = [{ '@context': 'https://schema.org', '@type': 'ImageGallery', name: copy[0], description: copy[1],
+  image: cases.filter((c) => mediaInfo(c.cover!)).slice(0, 12).map((c) => ({ '@type': 'ImageObject', contentUrl: Astro.site!.origin + fullUrl(c.cover!), name: c.h1 })) }];
+---
+<Base lang={lang} title={copy[0]} description={copy[1]} jsonLd={ld} alternates={{ ru: '/portfolio/', uk: '/portfolio/', en: '/portfolio/' }}>
+  <section class="container page-hero">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href={href(lang, '/')}>AdFoto</a><Fragment set:html={icon.chevronRight} /><span>{copy[2]}</span></nav>
+    <div class="page-hero-grid">
+      <h1>{copy[2]}</h1>
+      <p class="lead">{copy[1]}</p>
+    </div>
+  </section>
+  <section class="container" style="padding-bottom:var(--space-section)"><Masonry lang={lang} cases={cases} /></section>
+  <Cta lang={lang} />
+</Base>

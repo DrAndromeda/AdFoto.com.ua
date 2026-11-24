@@ -1,0 +1,234 @@
+---
+import '../styles/fonts.css';
+import fontHeadLatin from '@fontsource-variable/inter-tight/files/inter-tight-latin-wght-normal.woff2?url';
+import fontHeadCyr from '@fontsource-variable/inter-tight/files/inter-tight-cyrillic-wght-normal.woff2?url';
+import '../styles/global.css';
+import { LANGS, SITE, SECTIONS, type Lang } from '../lib/site';
+import { t, sectionMeta } from '../i18n/ui';
+import { href, asset, fullUrl, mediaInfo } from '../lib/content';
+import { icon } from '../lib/icons';
+
+interface Props {
+  lang: Lang; title: string; description: string;
+  alternates?: Partial<Record<Lang, string>>; // path WITHOUT lang prefix, e.g. "/foto/"
+  preload?: { srcset: string; sizes: string } ;
+  image?: string; jsonLd?: object[]; noindex?: boolean; type?: 'website' | 'article';
+  overHero?: boolean; // transparent header on top of a full-bleed hero
+  actionBar?: boolean; // sticky mobile contact bar
+}
+const { preload, lang, title, description, alternates = { ru: '/', uk: '/', en: '/' }, image, jsonLd = [], noindex = false, type = 'website', overHero = false, actionBar = false } = Astro.props;
+const origin = Astro.site!.origin;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const abs = (l: Lang, p: string) => `${origin}${base}/${l}${p}`;
+const rel = (l: Lang, p: string) => `${base}/${l}${p}`;
+const canonical = abs(lang, alternates[lang] ?? '/');
+const og = image ? (image.startsWith('http') ? image : origin + (mediaInfo(image) ? fullUrl(image) : asset(image))) : undefined;
+const locale = { ru: 'ru_UA', uk: 'uk_UA', en: 'en_US' }[lang];
+const path = Astro.url.pathname;
+const sec = sectionMeta[lang];
+const pad = (i: number) => String(i + 1).padStart(2, '0');
+const isCur = (p: string) => (path === href(lang, p) ? 'page' : undefined);
+const local = {
+  '@context': 'https://schema.org', '@type': 'LocalBusiness', '@id': `${origin}/#business`, name: SITE.name, url: origin,
+  telephone: SITE.phones[0], email: SITE.email, priceRange: '₴₴', openingHours: SITE.hours,
+  address: { '@type': 'PostalAddress', streetAddress: SITE.address.street, addressLocality: SITE.address.city, addressCountry: SITE.address.country },
+  sameAs: Object.values(SITE.social),
+};
+const langSwitch = LANGS.map((l) => ({ l, url: rel(l, alternates[l] ?? '/') }));
+---
+<!doctype html>
+<html lang={lang} data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex,follow" />}
+    {LANGS.filter((l) => alternates[l]).map((l) => <link rel="alternate" hreflang={l} href={abs(l, alternates[l]!)} />)}
+    <link rel="alternate" hreflang="x-default" href={abs('ru', alternates.ru ?? '/')} />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={locale} />
+    <meta property="og:site_name" content={SITE.name} />
+    {og && <meta property="og:image" content={og} />}
+    <meta name="twitter:card" content={og ? 'summary_large_image' : 'summary'} />
+    <meta name="theme-color" content="#0b0b0c" />
+    <link rel="icon" href={asset('/favicon.svg')} type="image/svg+xml" />
+    <link rel="preload" as="font" type="font/woff2" href={fontHeadLatin} crossorigin />
+    {lang !== 'en' && <link rel="preload" as="font" type="font/woff2" href={fontHeadCyr} crossorigin />}
+    {preload && <link rel="preload" as="image" type="image/avif" imagesrcset={preload.srcset} imagesizes={preload.sizes} fetchpriority="high" />}
+    <script is:inline>
+      (function () {
+        var d = document.documentElement, q = /[?&]theme=(light|dark)/.exec(location.search), s = null;
+        try { s = q ? q[1] : localStorage.getItem('theme'); } catch (e) {}
+        if (s) d.setAttribute('data-theme', s);
+        d.classList.add('js');
+      })();
+    </script>
+    <script type="application/ld+json" set:html={JSON.stringify(local)} />
+    {jsonLd.map((j) => <script type="application/ld+json" set:html={JSON.stringify(j)} />)}
+  </head>
+  <body id="top" class:list={{ "has-action-bar": actionBar }}>
+    <a class="skip" href="#main">{t(lang, 'skip')}</a>
+
+    <header class:list={['site-header', { 'over-hero': overHero }]} id="header">
+      <div class="container">
+        <div class="nav-bar">
+          <a class="logo" href={href(lang, '/')} aria-label={`AdFoto — ${t(lang, 'nav.home')}`}>Ad<b>Foto</b></a>
+          <nav class="nav" aria-label="Main">
+            <div class="nav-drop">
+              <button type="button" aria-haspopup="true">{t(lang, 'nav.services')}<Fragment set:html={icon.chevron} /></button>
+              <div class="mega">
+                {SECTIONS.map((s, i) => (
+                  <a href={href(lang, `/${s}/`)}><span class="n">{pad(i)}</span><strong>{sec[s].name}</strong><span>{sec[s].short}</span></a>
+                ))}
+                <a class="all" href={href(lang, '/faq/')}><strong>{t(lang, 'faq.title')}</strong><Fragment set:html={icon.arrow} /></a>
+              </div>
+            </div>
+            <a href={href(lang, '/portfolio/')} aria-current={isCur('/portfolio/')}>{t(lang, 'nav.portfolio')}</a>
+            <a href={href(lang, '/about/')} aria-current={isCur('/about/')}>{t(lang, 'nav.about')}</a>
+            <a href={href(lang, '/contacts/')} aria-current={isCur('/contacts/')}>{t(lang, 'nav.contacts')}</a>
+          </nav>
+          <div class="tools">
+            <div class="langs" role="group" aria-label={t(lang, 'lang')}>
+              {langSwitch.map(({ l, url }) => <a href={url} hreflang={l} lang={l} aria-current={l === lang ? 'true' : undefined}>{l}</a>)}
+            </div>
+            <button class="icon-btn theme-btn" data-theme-toggle type="button" aria-label={t(lang, 'theme')}><Fragment set:html={icon.moon + icon.sun} /></button>
+            <a class="btn sm header-cta" href={SITE.social.telegram} rel="noopener">{t(lang, 'cta.order')}</a>
+            <button class="icon-btn burger" id="burger" type="button" aria-expanded="false" aria-controls="menu" aria-label={t(lang, 'nav.menu')}><Fragment set:html={icon.menu} /></button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="menu" id="menu" aria-hidden="true">
+      <div class="menu-top">
+        <a class="logo" href={href(lang, '/')}>Ad<b>Foto</b></a>
+        <button class="icon-btn" id="menu-close" type="button" aria-label={t(lang, 'nav.close')}><Fragment set:html={icon.close} /></button>
+      </div>
+      <nav aria-label="Mobile">
+        {SECTIONS.map((s, i) => <a href={href(lang, `/${s}/`)}><small>{pad(i)}</small>{sec[s].name}</a>)}
+        <a href={href(lang, '/portfolio/')}><small>06</small>{t(lang, 'nav.portfolio')}</a>
+        <a href={href(lang, '/about/')}><small>07</small>{t(lang, 'nav.about')}</a>
+        <a href={href(lang, '/contacts/')}><small>08</small>{t(lang, 'nav.contacts')}</a>
+      </nav>
+      <div class="menu-foot">
+        <div class="btn-row">
+          <a class="btn" href={SITE.social.telegram} rel="noopener"><Fragment set:html={icon.telegram} />Telegram</a>
+          <a class="btn ghost" href={`tel:${SITE.phones[0]}`}><Fragment set:html={icon.phone} />{SITE.phonesDisplay[0]}</a>
+        </div>
+        <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+          <div class="langs" role="group" aria-label={t(lang, 'lang')}>
+            {langSwitch.map(({ l, url }) => <a href={url} hreflang={l} lang={l} aria-current={l === lang ? 'true' : undefined}>{l}</a>)}
+          </div>
+          <button class="icon-btn theme-btn" data-theme-toggle type="button" aria-label={t(lang, 'theme')}><Fragment set:html={icon.moon + icon.sun} /></button>
+        </div>
+        <div class="contact-line"><span>{SITE.address.street}, {SITE.address.city}</span><a href={`mailto:${SITE.email}`}>{SITE.email}</a></div>
+      </div>
+    </div>
+
+    <main id="main"><slot /></main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="foot-grid">
+          <div class="about">
+            <a class="logo" href={href(lang, '/')} style="font-size:1.8rem">Ad<b>Foto</b></a>
+            <p style="margin-top:1rem">{t(lang, 'footer.about')}</p>
+            <div class="socials">
+              <a href={SITE.social.telegram} rel="noopener" aria-label="Telegram"><Fragment set:html={icon.telegram} /></a>
+              <a href={SITE.social.instagram} rel="noopener" aria-label="Instagram"><Fragment set:html={icon.instagram} /></a>
+              <a href={SITE.social.facebook} rel="noopener" aria-label="Facebook"><Fragment set:html={icon.facebook} /></a>
+              <a href={SITE.social.youtube} rel="noopener" aria-label="YouTube"><Fragment set:html={icon.youtube} /></a>
+              <a href={SITE.social.linkedin} rel="noopener" aria-label="LinkedIn"><Fragment set:html={icon.linkedin} /></a>
+            </div>
+          </div>
+          <div>
+            <p class="foot-h">{t(lang, 'footer.services')}</p>
+            <ul>{SECTIONS.map((s) => <li><a href={href(lang, `/${s}/`)}>{sec[s].name}</a></li>)}</ul>
+          </div>
+          <div>
+            <p class="foot-h">{t(lang, 'footer.nav')}</p>
+            <ul>
+              <li><a href={href(lang, '/portfolio/')}>{t(lang, 'nav.portfolio')}</a></li>
+              <li><a href={href(lang, '/about/')}>{t(lang, 'nav.about')}</a></li>
+              <li><a href={href(lang, '/blog/')}>{t(lang, 'nav.blog')}</a></li>
+              <li><a href={href(lang, '/faq/')}>{t(lang, 'nav.faq')}</a></li>
+              <li><a href={href(lang, '/contacts/')}>{t(lang, 'nav.contacts')}</a></li>
+            </ul>
+          </div>
+          <div>
+            <p class="foot-h">{t(lang, 'footer.contacts')}</p>
+            <ul>
+              {SITE.phones.map((p, i) => <li><a href={`tel:${p}`}>{SITE.phonesDisplay[i]}</a></li>)}
+              <li><a href={`mailto:${SITE.email}`}>{SITE.email}</a></li>
+              <li><span class="muted">{SITE.address.street}, {SITE.address.city}</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="wordmark" aria-hidden="true"><b></b></div>
+        <div class="foot-bottom">
+          <span>© {new Date().getFullYear()} AdFoto.com.ua · {t(lang, 'footer.rights')}</span>
+          <a href="#top">{t(lang, 'footer.top')} ↑</a>
+        </div>
+      </div>
+    </footer>
+
+    {actionBar && (
+      <div class="action-bar" id="action-bar">
+        <a class="btn" href={SITE.social.telegram} rel="noopener"><Fragment set:html={icon.telegram} />{t(lang, 'cta.order')}</a>
+        <a class="icon-btn" href={SITE.whatsapp} rel="noopener" aria-label="WhatsApp"><Fragment set:html={icon.whatsapp} /></a>
+        <a class="icon-btn" href={`tel:${SITE.phones[0]}`} aria-label={t(lang, 'cta.call')}><Fragment set:html={icon.phone} /></a>
+      </div>
+    )}
+
+    <script>
+      const root = document.documentElement;
+      // theme
+      document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((b) =>
+        b.addEventListener('click', () => {
+          const next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+          root.setAttribute('data-theme', next);
+          try { localStorage.setItem('theme', next); } catch {}
+        }),
+      );
+      // header: solid after scroll, hide on scroll down, show on scroll up
+      const header = document.getElementById('header')!;
+      const bar = document.getElementById('action-bar');
+      let lastY = scrollY;
+      const onScroll = () => {
+        const y = scrollY;
+        header.classList.toggle('scrolled', y > 40);
+        header.classList.toggle('is-hidden', y > 400 && y > lastY && !document.body.classList.contains('menu-open'));
+        bar?.classList.toggle('show', y > 500);
+        lastY = y;
+      };
+      addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+      // mobile menu
+      const menu = document.getElementById('menu')!;
+      const burger = document.getElementById('burger')!;
+      const setMenu = (open: boolean) => {
+        menu.classList.toggle('open', open);
+        menu.setAttribute('aria-hidden', String(!open));
+        burger.setAttribute('aria-expanded', String(open));
+        document.body.classList.toggle('menu-open', open);
+        if (open) (menu.querySelector('nav a') as HTMLElement)?.focus({ preventScroll: true });
+        else burger.focus({ preventScroll: true });
+      };
+      burger.addEventListener('click', () => setMenu(true));
+      document.getElementById('menu-close')!.addEventListener('click', () => setMenu(false));
+      addEventListener('keydown', (e) => { if (e.key === 'Escape' && menu.classList.contains('open')) setMenu(false); });
+      matchMedia('(min-width: 1100px)').addEventListener('change', (e) => e.matches && setMenu(false));
+      // reveal on scroll
+      const els = document.querySelectorAll<HTMLElement>('[data-reveal]');
+      if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { rootMargin: '0px 0px -8% 0px' });
+        els.forEach((el) => io.observe(el));
+      } else els.forEach((el) => el.classList.add('in'));
+    </script>
+  </body>
+</html>

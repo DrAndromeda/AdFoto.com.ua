@@ -1,0 +1,5 @@
+---
+import { mediaInfo, pictureHtml } from '../lib/content';
+const { src, alt = '', sizes, eager = false, cls } = Astro.props as { src: string; alt?: string; sizes?: string; eager?: boolean; cls?: string };
+---
+<Fragment set:html={pictureHtml(src, alt, { sizes, eager, cls })} />

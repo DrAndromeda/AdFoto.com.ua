@@ -1,28 +1,39 @@
 name: Deploy to GitHub Pages
+# Builds the site and publishes dist/ to the gh-pages branch, which GitHub Pages serves
+# (Settings -> Pages -> "Deploy from a branch: gh-pages /"). Production is SherlockHost
+# (scripts/deploy-sherlock.sh); this is a noindex preview at https://drandromeda.github.io/AdFoto.com.ua/.
 on:
   push: { branches: [main] }
   workflow_dispatch:
-permissions: { contents: read, pages: write, id-token: write }
-concurrency: { group: pages, cancel-in-progress: true }
+permissions: { contents: write }
+concurrency: { group: pages, cancel-in-progress: false }
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
-      # Custom domain: leave BASE_PATH empty. Project page (user.github.io/repo): set BASE_PATH=/repo and SITE_URL.
+      # Overridable via repo variables, e.g. for a custom domain: SITE_URL=https://example.com, BASE_PATH=/, PUBLIC_NOINDEX=0
       - run: npm run build
         env:
-          SITE_URL: ${{ vars.SITE_URL || 'https://adfoto.com.ua' }}
-          BASE_PATH: ${{ vars.BASE_PATH || '/' }}
-      - uses: actions/upload-pages-artifact@v3
-        with: { path: dist }
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment: { name: github-pages, url: '${{ steps.d.outputs.page_url }}' }
-    steps:
-      - id: d
-        uses: actions/deploy-pages@v4
+          SITE_URL: ${{ vars.SITE_URL || 'https://drandromeda.github.io' }}
+          BASE_PATH: ${{ vars.BASE_PATH || '/AdFoto.com.ua' }}
+          PUBLIC_NOINDEX: ${{ vars.PUBLIC_NOINDEX || '1' }}
+      - name: Publish dist/ to gh-pages
+        run: |
+          set -euo pipefail
+          touch dist/.nojekyll          # keep _astro/ (Jekyll would drop underscore dirs)
+          rm -f dist/.htaccess          # Apache-only
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch --depth=1 origin gh-pages
+          git worktree add "$RUNNER_TEMP/site" FETCH_HEAD
+          cd "$RUNNER_TEMP/site"
+          git rm -rq --ignore-unmatch .
+          cp -a "$GITHUB_WORKSPACE/dist/." .
+          git add -A
+          git diff --cached --quiet && { echo 'No changes'; exit 0; }
+          git commit -qm "Deploy ${GITHUB_SHA::7} from main"
+          git push origin HEAD:gh-pages

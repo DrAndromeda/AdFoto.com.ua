@@ -44,7 +44,7 @@ const langSwitch = LANGS.map((l) => ({ l, url: rel(l, alternates[l] ?? '/') }));
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    {noindex && <meta name="robots" content="noindex,follow" />}
+    {(noindex || import.meta.env.PUBLIC_NOINDEX === '1') && <meta name="robots" content="noindex,follow" />}
     {LANGS.filter((l) => alternates[l]).map((l) => <link rel="alternate" hreflang={l} href={abs(l, alternates[l]!)} />)}
     <link rel="alternate" hreflang="x-default" href={abs('ru', alternates.ru ?? '/')} />
     <meta property="og:type" content={type} />
